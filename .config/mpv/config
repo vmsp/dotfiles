@@ -11,7 +11,7 @@ hwdec=auto
 # sigmoid-upscaling=yes
 # deband=yes
 icc-profile-auto=yes
-icc-cache-dir=~/.mpv/icc-cache
+icc-cache-dir=~/.config/mpv/icc-cache
 
 # Smoothmotion
 # video-sync=display-resample
