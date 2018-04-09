@@ -1,0 +1,40 @@
+# -*- mode: conf -*-
+
+[user]
+  name = Vitor Pereira
+  email = vmsousapereira@gmail.com
+
+[core]
+  excludesfile = ~/.gitignore_global
+  autocrlf = false
+  filemode = false
+
+[color]
+  diff = auto
+  status = auto
+  branch = auto
+  ui = auto
+
+[alias]
+  c = commit
+  co = checkout
+  cb = checkout -b
+  s = status -sb
+  d = diff
+  b = branch
+  p = push
+  l = log --all --graph --pretty=format:'%Cred%h%Creset\
+      -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\
+      --abbrev-commit --date=relative
+
+[push]
+  default = simple
+
+[branch]
+	autosetuprebase = always
+
+[help]
+  autocorrect = 1
+
+[magit]
+  hideCampaign = true
