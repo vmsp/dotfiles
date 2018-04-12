@@ -29,7 +29,9 @@ if test (uname) = Darwin
   set -gx HOMEBREW_NO_ANALYTICS 1
   abbr -a make gmake
   alias e 'open -a /Applications/Emacs.app'
-  alias t 'mv $argv ~/.Trash'
+  function t
+    mv $argv ~/.Trash
+  end
 else
   alias e 'emacs'
 end

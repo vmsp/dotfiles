@@ -11,11 +11,11 @@
 ;; Set font
 (cond
  ((eq system-type 'darwin)
-  (set-default-font "Menlo-12"))
+  (set-frame-font "SF Mono-12"))
  ((eq system-type 'gnu/linux)
-  (set-default-font "DejaVu Sans Mono-10"))
+  (set-frame-font "DejaVu Sans Mono-10"))
  ((eq system-type 'windows-nt)
-  (set-default-font "Consolas-11")))
+  (set-frame-font "Consolas-11")))
 
 ;; prevent gc during startup then set it back
 (setq gc-cons-threshold most-positive-fixnum)
@@ -115,7 +115,6 @@
 
 ;; Disable fringe
 (fringe-mode 0)
-;; (set-fringe-mode '(0 . 0))
 
 ;; Save on lost focus
 (add-hook 'focus-out-hook
@@ -538,8 +537,7 @@ limitations under the License.")))
   :init
   (use-package sqlup-mode
     :ensure t
-    :commands sqlup-mode
-    :init (add-hook 'sql-mode-hook #'sqlup-mode))
+    :hook sql-mode)
   :config
   (sql-highlight-postgres-keywords))
 
@@ -610,6 +608,8 @@ limitations under the License.")))
   (setq reftex-plug-into-AUCTeX t)
   (setq reftex-extra-bindings t)
   :config
+  (add-hook 'LaTeX-mode-hook (lambda ()
+                               (setq comment-auto-fill-only-comments nil)))
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
   (add-hook 'LaTeX-mode-hook 'turn-on-flyspell)
   (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
@@ -668,8 +668,7 @@ limitations under the License.")))
 
 (use-package ws-butler
   :ensure t
-  :commands ws-butler-mode
-  :init (add-hook 'prog-mode-hook #'ws-butler-mode))
+  :hook prog-mode)
 
 
 (use-package dumb-jump
