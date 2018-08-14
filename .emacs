@@ -1,23 +1,22 @@
 ;;; General
 
-(setq debug-on-error t)
-
 ;; Turn off gui niceties
 (scroll-bar-mode -1)
 (tooltip-mode -1)
 (tool-bar-mode -1)
 (blink-cursor-mode -1)
+(unless (display-graphic-p) (menu-bar-mode -1))
 
 ;; Set font
-(cond
- ((eq system-type 'darwin)
-  (set-frame-font "SF Mono-12"))
- ((eq system-type 'gnu/linux)
-  (set-frame-font "DejaVu Sans Mono-10"))
- ((eq system-type 'windows-nt)
-  (set-frame-font "Consolas-11")))
+;; (cond
+;;  ((eq system-type 'darwin)
+;;   (set-frame-font "Input Mono Narrow-12"))
+;;  ((eq system-type 'gnu/linux)
+;;   (set-frame-font "DejaVu Sans Mono-10"))
+;;  ((eq system-type 'windows-nt)
+;;   (set-frame-font "Consolas-11")))
 
-;; prevent gc during startup then set it back
+;; prevent gc during startup then reset it
 (setq gc-cons-threshold most-positive-fixnum)
 (add-hook 'after-init-hook (lambda () (setq gc-cons-threshold 20000000)))
 
@@ -216,16 +215,11 @@
 ;;; Appearance
 
 ;; (load-theme 'leuven t)
-;; (custom-set-faces
-;;  `(fringe ((t (:background ,(face-background 'default)))))
-;;  `(font-lock-comment-face ((t (:slant normal)))))
 
-(use-package solarized-theme
+(use-package gruvbox-theme
   :ensure t
   :config
-  ;; fix weird modeline underline
-  (setq x-underline-at-descent-line t)
-  (load-theme 'solarized-light t))
+  (load-theme 'gruvbox-dark-medium t))
 
 ;;; macOS
 
@@ -244,11 +238,12 @@
 (use-package dired
   :bind (("C-x C-j" . dired-jump)
          :map dired-mode-map
+         ("RET" . dired-find-alternate-file)
          ("C-x C-q" . wdired-change-to-wdired-mode))
   :init
   (defun my-dired-mode-hook ()
+    ;; (disable-command 'dired-find-file-other-buffer)
     (dired-hide-details-mode t))
-
   (when (eq system-type 'darwin)
     (setq dired-use-ls-dired nil))
   :config
@@ -287,7 +282,6 @@
  ("C-x C-b" . ibuffer)
  ("C-." . hippie-expand)
  ("C-x TAB" . imenu)
- ("C-x m" . eshell)
  ("C-," . project-find-file))
 
 ;; tab indents and autocompletes
@@ -312,7 +306,7 @@
     (indent-region (point-min) (point-max))
     (delete-trailing-whitespace)))
 
-(bind-key "C-c n" #'my-cleanup-buffer)
+(bind-key "C-c C-f" #'my-cleanup-buffer)
 
 (defun my-swap-window-buffers ()
   (interactive)
@@ -330,6 +324,22 @@
     (comment-dwim arg)))
 
 (bind-key* "M-;" #'my-comment-dwim)
+
+(defun rename-file-and-buffer (new-name)
+  "Renames both current buffer and file it's visiting to
+NEW-NAME. Blatantly stolen from Steve Yegge."
+  (interactive "sNew name: ")
+  (let ((name (buffer-name))
+        (filename (buffer-file-name)))
+    (if (not filename)
+        (message "Buffer '%s' is not visiting a file!" name)
+      (if (get-buffer new-name)
+          (message "A buffer named '%s' already exists!" new-name)
+        (progn
+          (rename-file filename new-name 1)
+          (rename-buffer new-name)
+          (set-visited-file-name new-name)
+          (set-buffer-modified-p nil))))))
 
 ;;; All languages
 
@@ -349,7 +359,7 @@
 (global-subword-mode t)
 
 ;; highlight current line
-(global-hl-line-mode t)
+;; (global-hl-line-mode t)
 
 ;; auto insert for include guards and such
 (setq auto-insert-alist '())
@@ -358,6 +368,7 @@
 
 (defun my-prog-mode-hook ()
   (abbrev-mode -1)
+  ;; (display-line-numbers-mode)
   (font-lock-add-keywords
    nil
    '(("\\<\\(FIXME\\|TODO\\)\\>" 1 'font-lock-warning-face t))))
@@ -367,12 +378,12 @@
 ;; Licenses
 
 (setq my-licenses
-      '((proprietary . "Copyright 2018 Vitor Pereira
+      '((proprietary . "Copyright 2018 Vitor Sousa Pereira.
 
 Proprietary and confidential. Unauthorized reproduction or
 transmission of this file in any form, in whole or in part, is
 strictly prohibited.")
-        (apachev2 . "Copyright 2018 Vitor Pereira
+        (apachev2 . "Copyright 2018 Vitor Sousa Pereira.
 
 Licensed under the Apache License, Version 2.0 (the \"License\");
 you may not use this file except in compliance with the License.
@@ -439,13 +450,14 @@ limitations under the License.")))
   :init
   (defun my-c-mode-common-hook ()
     (google-set-c-style)
+    ;; (c-guess)
     (c-set-offset 'inextern-lang '0))
   (add-hook 'c-mode-common-hook #'my-c-mode-common-hook))
 
 (defun my-include-guard-name ()
   (let* ((fname (buffer-file-name))
-         (rel-fname (file-relative-name fname
-                                        (locate-dominating-file fname ".git"))))
+         (rel-fname (file-relative-name fname (locate-dominating-file
+                                               fname ".git"))))
     (upcase (concat (replace-regexp-in-string "[^[:alnum:]]" "_" rel-fname)
                     "_"))))
 
@@ -466,8 +478,10 @@ limitations under the License.")))
 
 (use-package protobuf-mode
   :load-path "/usr/local/opt/protobuf/share/doc/protobuf/editors"
-  :mode "\\.proto\\'")
+  :mode "\\.proto\\'"
+  :config (add-hook 'protobuf-mode-hook 'turn-on-auto-fill))
 
+;; build systems
 
 (use-package cmake-mode
   :load-path "/usr/local/share/emacs/site-lisp/cmake"
@@ -478,31 +492,18 @@ limitations under the License.")))
   '(nil (my-license "# ")))
 
 (use-package gn-mode
-  :load-path "~/.emacs.d/third_party/"
+  :load-path "~/src/third_party/gn/tools/gn/misc/emacs"
   :mode "\\.gni?\\'")
 
 (define-auto-insert
   '("\\.gn\\'" . "GN")
   '(nil (my-license "# ")))
 
-
-(use-package bazel-mode
-  :ensure t
-  :mode "\\.bzl\\|WORKSPACE\\'")
-
 ;; swift
 
-;; (use-package swift-mode
-;;   :load-path "~/.emacs.d/third_party/"
-;;   :mode ("\\.swift\\'"))
-
 (use-package swift-mode
-  :ensure t
-  :mode "\\.swift\\'"
-  :init
-  (setq swift-mode:basic-offset 2
-        swift-mode:multiline-statement-offset 4
-        swift-mode:parenthesized-expression-offset 4))
+  :load-path "~/src/third_party/emacs"
+  :mode ("\\.swift\\'"))
 
 ;; assembly
 
@@ -514,8 +515,20 @@ limitations under the License.")))
 
 ;; python
 
-;; (use-package python
-;;   :mode ("\\.py\\|\\.bzl\\|BUILD\\|WORKSPACE\\'" . python-mode))
+(setq python-indent-offset 2)
+
+(defun my-python-indent-continuation (origfun &rest args)
+  (pcase (python-indent-context)
+    (`(:inside-paren-newline-start . ,start)
+     (save-excursion
+       (goto-char start)
+       (+ (current-indentation)
+          (* python-indent-offset python-indent-def-block-scale))))
+    (_ (apply origfun args))))
+
+(advice-add #'python-indent--calculate-indentation
+            :around
+            #'my-python-indent-continuation)
 
 (define-auto-insert
   '("\\.py\\'" . "Python header")
@@ -525,7 +538,8 @@ limitations under the License.")))
 
 (use-package org
   :defer t
-  :init (setq org-startup-indented t))
+  :init (setq org-startup-indented t)
+  :mode ("\\.org\\'" . org-mode))
 
 ;; SQL
 
@@ -541,11 +555,18 @@ limitations under the License.")))
   :config
   (sql-highlight-postgres-keywords))
 
+;; js
+
+(use-package js-mode
+  :mode "\\.js\\'"
+  :init
+  (setq js-indent-level 2))
+
 ;; web
 
 (use-package web-mode
   :ensure t
-  :mode "\\.djhtml\\'"
+  :mode "\\.\\(dj\\)?html\\'"
   :commands web-mode-hook
   :init
   (setq web-mode-markup-indent-offset 2)
@@ -571,16 +592,25 @@ limitations under the License.")))
 
 (use-package erlang
   :ensure t
-  :mode ("\\.erl\\'". erlang-mode)
-  :bind (:map erlang-mode-map
-              ("RET" . electric-newline-and-maybe-indent))
+  :mode ("\\(\\.[he]rl\\|\\(relx\\|rebar\\|sys\\).config\\)\\'" . erlang-mode)
   :init
-  (setq erlang-electric-commands '())
-  :config
-  (setq erlang-indent-level 2)
-  (defun my-erlang-mode-hook ()
-    (electric-indent-local-mode 0))
-  (add-hook 'erlang-mode-hook 'my-erlang-mode-hook))
+  ;; restores regular newline and indent
+  (setq erlang-electric-commands '(erlang-electric-newline)
+        erlang-electric-newline-inhibit nil)
+  (setq erlang-indent-level 2
+        erlang-check-module-name t))
+  ;; (setq erlang-electric-commands '()
+  ;;       erlang-indent-level 2))
+  ;; :bind (:map erlang-mode-map
+  ;;             ("RET" . electric-newline-and-maybe-indent))
+  ;; :config
+  ;; (defun my-erlang-mode-hook ()
+  ;;   (electric-indent-local-mode 0))
+  ;; (add-hook 'erlang-mode-hook 'my-erlang-mode-hook))
+
+(define-auto-insert
+  '("\\(\\.[he]rl\\|\\(relx\\|rebar\\|sys\\).config\\)\\'" . "Erlang")
+  '(nil (my-license "%% ")))
 
 ;; markdown
 
@@ -590,7 +620,11 @@ limitations under the License.")))
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
+  :init
+  (setq markdown-enable-math t)
+  (setq markdown-command "multimarkdown")
+  :config
+  (add-hook 'markdown-mode-hook 'turn-on-flyspell))
 
 ;; latex
 
@@ -608,8 +642,9 @@ limitations under the License.")))
   (setq reftex-plug-into-AUCTeX t)
   (setq reftex-extra-bindings t)
   :config
-  (add-hook 'LaTeX-mode-hook (lambda ()
-                               (setq comment-auto-fill-only-comments nil)))
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (setq-local comment-auto-fill-only-comments nil)))
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
   (add-hook 'LaTeX-mode-hook 'turn-on-flyspell)
   (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
@@ -627,6 +662,23 @@ limitations under the License.")))
   :init
   (setq fish-indent-offset 2))
 
+;; yaml
+
+(use-package yaml-mode
+  :ensure t)
+
+;;; eshell
+
+(use-package eshell
+  :bind ("C-x m" . eshell)
+  :init
+  (setq eshell-where-to-jump 'begin)
+  (setq eshell-review-quick-commands nil)
+  :config
+  (use-package em-smart
+    :init
+    (setq eshell-smart-space-goes-to-end t)))
+
 ;;; Etc.
 
 (use-package magit
@@ -636,7 +688,8 @@ limitations under the License.")))
   (setq magit-last-seen-setup-instructions "1.4.0")
   :config
   (setq magit-completing-read-function 'magit-ido-completing-read)
-  (custom-set-variables '(magit-set-upstream-on-push (quote dontask))))
+  :custom
+  (magit-set-upstream-on-push (quote dontask)))
 
 
 (use-package mwim
@@ -668,7 +721,7 @@ limitations under the License.")))
 
 (use-package ws-butler
   :ensure t
-  :hook prog-mode)
+  :hook (prog-mode . ws-butler-mode))
 
 
 (use-package dumb-jump
@@ -678,8 +731,4 @@ limitations under the License.")))
          ("M-g i" . dumb-jump-go-prompt)
          ("M-g x" . dumb-jump-go-prefer-external)
          ("M-g z" . dumb-jump-go-prefer-external-other-window)))
-
-
-(use-package esup
-  :ensure
-  :commands esup)
+(put 'dired-find-alternate-file 'disabled nil)
