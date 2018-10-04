@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 ;;; General
 
 ;; Turn off gui niceties
@@ -16,9 +18,17 @@
 ;;  ((eq system-type 'windows-nt)
 ;;   (set-frame-font "Consolas-11")))
 
-;; prevent gc during startup then reset it
-(setq gc-cons-threshold most-positive-fixnum)
-(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold 20000000)))
+;; turn off a few things, for faster startup, and then reset them
+(defvar my-file-name-handler-alist file-name-handler-alist)
+(setq gc-cons-threshold most-positive-fixnum
+      gc-cons-percentage 1
+      file-name-handler-alist nil)
+
+(defun my-reset-defaults ()
+  (setq gc-cons-threshold 16777216
+        gc-cons-percentage 0.1
+        file-name-handler-alist my-file-name-handler-alist))
+(add-hook #'after-init-hook #'my-reset-defaults)
 
 ;; Disable startup message
 (setq inhibit-startup-screen t)
@@ -36,13 +46,11 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
 
-;; package
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(package-initialize t)
-
-(let ((default-directory "~/.emacs.d/elpa"))
-  (normal-top-level-add-subdirs-to-load-path))
+;; package.el
+(setq package-enable-at-startup nil)
+(setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
+(package-initialize)
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -163,8 +171,6 @@
 (use-package anzu
   :ensure t
   :config
-  (set-face-attribute 'anzu-mode-line nil
-                      :foreground "orange" :weight 'bold)
   (global-anzu-mode 1))
 
 ;; saveplace
@@ -272,8 +278,8 @@
   (bind-key "C-z" 'undo))
 
 (bind-keys
- ("M-p" . backward-paragraph)
- ("M-n" . forward-paragraph)
+ ;; ("M-p" . backward-paragraph)
+ ;; ("M-n" . forward-paragraph)
  ("C-s" . isearch-forward-regexp)
  ("C-r" . isearch-backward-regexp)
  ("M-%" . query-replace-regexp)
@@ -360,6 +366,11 @@ NEW-NAME. Blatantly stolen from Steve Yegge."
 
 ;; highlight current line
 ;; (global-hl-line-mode t)
+
+;; highlight very long lines
+;; (setq whitespace-style '(face lines-tail))
+;; (setq whitespace-line-column 80)
+;; (global-whitespace-mode t)
 
 ;; auto insert for include guards and such
 (setq auto-insert-alist '())
@@ -462,7 +473,7 @@ limitations under the License.")))
                     "_"))))
 
 (define-auto-insert
-  '("\\.\\(h\\|hh\\|hpp\\|hxx\\)\\'" . "C/C++/ObjC Header")
+  '("\\.\\(h\\|hpp\\|hxx\\)\\'" . "C/C++/ObjC Header")
   '((my-include-guard-name)
     (my-license "// ")
     "#ifndef " str n "#define " str n n _ n n "#endif  // " str))
@@ -558,7 +569,7 @@ limitations under the License.")))
 ;; js
 
 (use-package js-mode
-  :mode "\\.js\\'"
+  :mode "\\.m?js\\'"
   :init
   (setq js-indent-level 2))
 
@@ -566,7 +577,7 @@ limitations under the License.")))
 
 (use-package web-mode
   :ensure t
-  :mode "\\.\\(dj\\)?html\\'"
+  :mode "\\.\\(html\\|dtl\\)\\'"
   :commands web-mode-hook
   :init
   (setq web-mode-markup-indent-offset 2)
@@ -599,18 +610,39 @@ limitations under the License.")))
         erlang-electric-newline-inhibit nil)
   (setq erlang-indent-level 2
         erlang-check-module-name t))
-  ;; (setq erlang-electric-commands '()
-  ;;       erlang-indent-level 2))
-  ;; :bind (:map erlang-mode-map
-  ;;             ("RET" . electric-newline-and-maybe-indent))
-  ;; :config
-  ;; (defun my-erlang-mode-hook ()
-  ;;   (electric-indent-local-mode 0))
-  ;; (add-hook 'erlang-mode-hook 'my-erlang-mode-hook))
 
 (define-auto-insert
   '("\\(\\.[he]rl\\|\\(relx\\|rebar\\|sys\\).config\\)\\'" . "Erlang")
   '(nil (my-license "%% ")))
+
+;; go
+
+;; (use-package go-mode
+;;   :ensure t
+;;   :mode "\\.go\\'")
+
+;; clojure
+
+;; (use-package clojure-mode
+;;   :mode (("\\.clj\\'" . clojure-mode)
+;;          ("\\.cljs\\'" . clojurescript-mode))
+;;   :config
+;;   (add-hook #'clojure-mode-hook #'turn-on-eldoc-mode)
+;;   (add-hook #'clojurescript-mode-hook #'turn-on-eldoc-mode))
+
+;; (use-package cider
+;;   :ensure t
+;;   :defer t)
+
+;; hack
+
+;; (use-package hack-mode
+;;   :ensure t
+;;   :mode "\\.php\\'")
+
+;; (define-auto-insert
+;;   '("\\.php\\'" . "Hack")
+;;   '(nil "<?hh // strict"))
 
 ;; markdown
 
@@ -655,12 +687,6 @@ limitations under the License.")))
 
 (setq sh-basic-offset 2
       sh-indentation 2)
-
-(use-package fish-mode
-  :ensure t
-  :mode "\\.fish\\'"
-  :init
-  (setq fish-indent-offset 2))
 
 ;; yaml
 

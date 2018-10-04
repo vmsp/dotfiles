@@ -16,6 +16,7 @@
   ui = auto
 
 [alias]
+  a = add
   c = commit
   co = checkout
   cb = checkout -b

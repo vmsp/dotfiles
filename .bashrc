@@ -1,11 +1,12 @@
+[[ $TERM = dumb ]] && return
+
 export PATH=~/bin:$PATH
 export EDITOR=emacs
-export TERM=xterm-256color
 export MANWIDTH=80
 
-export PS1="\\[\\e[36m\\]\\w \\[\\e[31m\\]❯ \\[\\e[0m\\]"
+export PS1="\\[\\e[33m\\]\\h \\[\\e[36m\\]\\w \\[\\e[31m\\]❯ \\[\\e[0m\\]"
 
-alias ..="cd .."e
+alias ..="cd .."
 alias dc="cd"
 alias l="ls -1"
 alias sl="ls"
@@ -29,6 +30,9 @@ if [[ $(uname) == "Darwin" ]]; then
   export HOMEBREW_NO_ANALYTICS=1
   e() { open -a /Applications/Emacs.app "$@"; }
   t() { mv "$@" ~/.Trash; }
+elif [[ $(uname) == "Linux" ]]; then
+  shopt -s globstar
+  alias ls="ls --color=auto"
 fi
 
 # pipsi
