@@ -113,6 +113,7 @@
 (setq isearch-case-fold-search 'yes)
 
 ;; Turn on auto-fill mode
+(setq-default fill-column 80)
 (setq comment-auto-fill-only-comments t)
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
@@ -573,6 +574,14 @@ limitations under the License.")))
   :init
   (setq js-indent-level 2))
 
+;; ts
+
+(use-package typescript-mode
+  :ensure t
+  :mode "\\.ts\\'"
+  :init
+  (setq typescript-indent-level 2))
+
 ;; web
 
 (use-package web-mode
@@ -617,9 +626,9 @@ limitations under the License.")))
 
 ;; go
 
-;; (use-package go-mode
-;;   :ensure t
-;;   :mode "\\.go\\'")
+(use-package go-mode
+  :ensure t
+  :mode "\\.go\\'")
 
 ;; clojure
 
