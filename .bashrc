@@ -10,7 +10,6 @@ PS1="\\[\\e[36m\\]\\w \\[\\e[31m\\]❯ \\[\\e[0m\\]"
 if [[ -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
   PS1="(\\[\\e[33m\\]\\h) $PS1"
 fi
-export PS1
 
 alias ..="cd .."
 alias ...="..; .."
