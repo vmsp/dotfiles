@@ -1,5 +1,5 @@
-# This is needed so emacs' TRAMP mode doesn't hang when I try to connect to a
-# server that has my config.
+# This is needed so emacs' TRAMP mode doesn't hang when
+# I try to connect to a server that has my config.
 [[ $TERM = dumb ]] && return
 
 export PATH=~/bin:$PATH
@@ -42,5 +42,4 @@ elif [[ "$OS" = "Linux" ]]; then
   alias ls="ls --color=auto"
 fi
 
-# pipsi
-export PATH=~/.local/bin:$PATH
+[[ -f ~/.hostrc ]] && source ~/.hostrc

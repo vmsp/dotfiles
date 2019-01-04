@@ -66,18 +66,21 @@
 
 ;; Always use UTF-8
 (set-language-environment "UTF-8")
+(setq locale-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
 (set-default-coding-systems 'utf-8)
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
-;; *-unix variants use \n line endings even on windows
-(setq-default buffer-file-coding-system 'utf-8-unix)
+(set-selection-coding-system 'utf-8)
 
 ;; Ignore case for file completion
 (setq read-file-name-completion-ignore-case t)
 
 ;; visible marked region
 (transient-mark-mode t)
+
+;; Remove text in active region if inserting text
+(delete-selection-mode 1)
 
 ;; less prompts
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -86,14 +89,13 @@
       (remq 'process-kill-buffer-query-function
             kill-buffer-query-functions))
 
-(defun find-file--make-directory-maybe (filename &optional wildcards)
-  "When creating a file also create parent directories if needed."
-  (unless (file-exists-p filename)
-    (let ((dir (file-name-directory filename)))
-      (unless (file-exists-p dir)
-        (make-directory dir)))))
-
-(advice-add 'find-file :before #'find-file--make-directory-maybe)
+;; create file and parent directories if needed
+(defun my-create-non-existent-directory ()
+  (let ((parent-directory (file-name-directory buffer-file-name)))
+    (when (and (not (file-exists-p parent-directory))
+               (y-or-n-p (format "Directory `%s' does not exist! Create it?" parent-directory)))
+      (make-directory parent-directory t))))
+(add-to-list 'find-file-not-found-functions #'my-create-non-existent-directory)
 
 ;; deleted files to go trash
 (setq delete-by-moving-to-trash t)
@@ -118,8 +120,19 @@
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 
-;; Auto revert if file changed on disk
+;; Auto refresh buffers
 (global-auto-revert-mode t)
+
+;; Also auto refresh dired, but be quiet about it
+(setq global-auto-revert-non-file-buffers t)
+(setq auto-revert-verbose nil)
+
+;; Save a list of recent files visited. (open recent file with C-x f)
+(recentf-mode 1)
+(setq recentf-max-saved-items 100) ;; just 20 is too recent
+
+;; Show me empty lines after buffer end
+(set-default 'indicate-empty-lines t)
 
 ;; Disable fringe
 (fringe-mode 0)
@@ -134,7 +147,8 @@
 ;; Save history
 (setq savehist-additional-variables
       '(search-ring regexp-search-ring)
-      savehist-file (concat user-emacs-directory "savehist"))
+      savehist-file (concat user-emacs-directory "savehist")
+      history-length 1000)
 (savehist-mode t)
 
 ;; Backups
@@ -155,7 +169,9 @@
 ;; paste behaviour
 (setq save-interprogram-paste-before-kill t)
 
-;; ediff always in a single frame
+;; ediff
+(setq ediff-diff-options "-w")
+(setq ediff-split-window-function 'split-window-horizontally)
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 
 ;; uniquify
@@ -173,6 +189,11 @@
   :ensure t
   :config
   (global-anzu-mode 1))
+
+;; Keep cursor away from edges when scrolling up/down
+(use-package smooth-scrolling
+  :ensure t
+  :config (smooth-scrolling-mode 1))
 
 ;; saveplace
 (setq save-place-file (concat user-emacs-directory "places"))
@@ -223,22 +244,50 @@
 
 ;; (load-theme 'leuven t)
 
-(use-package gruvbox-theme
+;; (use-package gruvbox-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'gruvbox t))
+
+(use-package doom-themes
   :ensure t
+  :init
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
   :config
-  (load-theme 'gruvbox-dark-medium t))
+  (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+
+(use-package doom-modeline
+  :ensure t
+  :hook (after-init . doom-modeline-init)
+  :init
+  (setq doom-modeline-major-mode-icon nil
+        oom-modeline-lsp nil
+        doom-modeline-github nil))
+
+;; (use-package solaire-mode
+;;   :ensure t
+;;   :hook ((change-major-mode after-revert ediff-prepare-buffer)
+;;          . turn-on-solaire-mode)
+;;   :config
+;;   (add-hook 'minibuffer-setup-hook #'solaire-mode-in-minibuffer)
+;;   (solaire-mode-swap-bg))
 
 ;;; macOS
 
-(setq mac-pass-command-to-system nil)
-(setq ns-pop-up-frames nil)
-(setq ns-command-modifier 'meta
+;; (setq mac-pass-command-to-system nil)
+(setq ns-pop-up-frames nil
+      ns-command-modifier 'meta
       ns-option-modifier 'none)
 
 (use-package exec-path-from-shell
   :if (eq system-type 'darwin)
   :ensure t
-  :config (exec-path-from-shell-initialize))
+  :config
+  (setq exec-path-from-shell-arguments nil)
+  (exec-path-from-shell-initialize))
 
 ;;; dired
 
@@ -254,6 +303,7 @@
   (when (eq system-type 'darwin)
     (setq dired-use-ls-dired nil))
   :config
+  (put 'dired-find-alternate-file 'disabled nil)
   (use-package dired-x
     :config
     (setq-default dired-omit-files-p t)
@@ -519,11 +569,13 @@ limitations under the License.")))
 
 ;; assembly
 
-(use-package asm-mode
-  :defer t
-  :init
-  (setq asm-comment-char ?\/)
-  (font-lock-add-keywords 'asm-mode cpp-font-lock-keywords))
+;; asm-calculate-indentation
+
+;; (use-package asm-mode
+;;   :defer t
+;;   :init
+;;   (setq asm-comment-char ?\/)
+;;   (font-lock-add-keywords 'asm-mode cpp-font-lock-keywords))
 
 ;; python
 
@@ -766,4 +818,3 @@ limitations under the License.")))
          ("M-g i" . dumb-jump-go-prompt)
          ("M-g x" . dumb-jump-go-prefer-external)
          ("M-g z" . dumb-jump-go-prefer-external-other-window)))
-(put 'dired-find-alternate-file 'disabled nil)

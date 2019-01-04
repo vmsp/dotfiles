@@ -1,19 +1,13 @@
 # -*- mode: conf -*-
 
 [user]
-  name = Vitor Sousa Pereira
+  name = Vitor Pereira
   email = vmsousapereira@gmail.com
 
 [core]
-  excludesfile = ~/.gitignore_global
-  autocrlf = false
-  filemode = false
-
-[color]
-  diff = auto
-  status = auto
-  branch = auto
-  ui = auto
+  excludesFile = ~/.gitignore_global
+  autocrlf = input  # set to true on windows
+  safecrlf = true
 
 [alias]
   a = add
@@ -28,14 +22,11 @@
       -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\
       --abbrev-commit --date=relative
 
-[push]
-  default = simple
-
 [branch]
-	autosetuprebase = always
+	autoSetupRebase = always
 
 [help]
-  autocorrect = 1
+  autoCorrect = 1
 
 [magit]
   hideCampaign = true
