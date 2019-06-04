@@ -93,7 +93,8 @@
 (defun my-create-non-existent-directory ()
   (let ((parent-directory (file-name-directory buffer-file-name)))
     (when (and (not (file-exists-p parent-directory))
-               (y-or-n-p (format "Directory `%s' does not exist! Create it?" parent-directory)))
+               (y-or-n-p (format "Directory `%s' does not exist! Create it?"
+                                 parent-directory)))
       (make-directory parent-directory t))))
 (add-to-list 'find-file-not-found-functions #'my-create-non-existent-directory)
 
@@ -103,8 +104,10 @@
 ;; Hide mouse while typing
 (setq make-pointer-invisible t)
 
-;; Tabs are spaces
+;; Tab size
 (setq-default tab-width 2)
+
+;; Indent with spaces, by default
 (setq-default indent-tabs-mode nil)
 
 ;; Open symlinks
@@ -127,9 +130,9 @@
 (setq global-auto-revert-non-file-buffers t)
 (setq auto-revert-verbose nil)
 
-;; Save a list of recent files visited. (open recent file with C-x f)
+;; Save a list of recent files visited. Open recent files with C-x C-r
 (recentf-mode 1)
-(setq recentf-max-saved-items 100) ;; just 20 is too recent
+(setq recentf-max-saved-items 100)
 
 ;; Show me empty lines after buffer end
 (set-default 'indicate-empty-lines t)
@@ -210,9 +213,9 @@
 (setq ido-enable-flex-matching t
       ido-create-new-buffer 'always
       ido-use-faces nil
-      ;; If I'm not quick to press RET, ido finds a file with a
-      ;; similar name in whatever directories I've recenty
-      ;; used. Disable this behaviour.
+      ido-use-virtual-buffers t
+      ;; If I'm not quick to press RET, ido finds a file with a similar name in
+      ;; whatever directories I've recenty used. Disable this behaviour.
       ido-auto-merge-work-directories-length nil)
 
 (use-package flx-ido
@@ -228,10 +231,6 @@
   :bind (("M-x" . smex)
          ("M-X" . smex-major-mode-commands)))
 
-;; project.el
-
-(setq project-vc-ignores '("third_party"))
-
 ;; GPG
 
 (use-package epa-file
@@ -246,34 +245,19 @@
 
 ;; (use-package gruvbox-theme
 ;;   :ensure t
-;;   :config
-;;   (load-theme 'gruvbox t))
+;;   :config (load-theme 'gruvbox t))
 
-(use-package doom-themes
-  :ensure t
-  :init
-  (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t)
-  :config
-  (load-theme 'doom-one t)
-  (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
-
-(use-package doom-modeline
-  :ensure t
-  :hook (after-init . doom-modeline-init)
-  :init
-  (setq doom-modeline-major-mode-icon nil
-        oom-modeline-lsp nil
-        doom-modeline-github nil))
-
-;; (use-package solaire-mode
+;; (use-package monokai-theme
 ;;   :ensure t
-;;   :hook ((change-major-mode after-revert ediff-prepare-buffer)
-;;          . turn-on-solaire-mode)
-;;   :config
-;;   (add-hook 'minibuffer-setup-hook #'solaire-mode-in-minibuffer)
-;;   (solaire-mode-swap-bg))
+;;   :config (load-theme 'monokai t))
+
+(use-package rebecca-theme
+  :ensure t
+  :config (load-theme 'rebecca t))
+
+;; (use-package dracula-theme
+;;   :ensure t
+;;   :config (load-theme 'dracula t))
 
 ;;; macOS
 
@@ -285,9 +269,7 @@
 (use-package exec-path-from-shell
   :if (eq system-type 'darwin)
   :ensure t
-  :config
-  (setq exec-path-from-shell-arguments nil)
-  (exec-path-from-shell-initialize))
+  :config (exec-path-from-shell-initialize))
 
 ;;; dired
 
@@ -339,7 +321,11 @@
  ("C-x C-b" . ibuffer)
  ("C-." . hippie-expand)
  ("C-x TAB" . imenu)
- ("C-," . project-find-file))
+ ("C-x C-r" . recentf-open-files))
+
+(bind-keys
+ ("M-p" . backward-paragraph)
+ ("M-n" . forward-paragraph))
 
 ;; tab indents and autocompletes
 (setq tab-always-indent 'complete)
@@ -416,16 +402,11 @@ NEW-NAME. Blatantly stolen from Steve Yegge."
 (global-subword-mode t)
 
 ;; highlight current line
-;; (global-hl-line-mode t)
-
-;; highlight very long lines
-;; (setq whitespace-style '(face lines-tail))
-;; (setq whitespace-line-column 80)
-;; (global-whitespace-mode t)
+;; (add-hook 'prog-mode-hook 'hl-line-mode)
 
 ;; auto insert for include guards and such
-(setq auto-insert-alist '())
-(setq auto-insert-query nil)
+(setq auto-insert-alist '()
+      auto-insert-query nil)
 (auto-insert-mode 1)
 
 (defun my-prog-mode-hook ()
@@ -433,19 +414,20 @@ NEW-NAME. Blatantly stolen from Steve Yegge."
   ;; (display-line-numbers-mode)
   (font-lock-add-keywords
    nil
-   '(("\\<\\(FIXME\\|TODO\\)\\>" 1 'font-lock-warning-face t))))
+   ;; TODO(<identifier>): Highlight TODOs like this.
+   '(("\\<\\(TODO\\)\\((.+)\\)?:" 1 'font-lock-warning-face prepend))))
 
 (add-hook 'prog-mode-hook #'my-prog-mode-hook)
 
 ;; Licenses
 
 (setq my-licenses
-      '((proprietary . "Copyright 2018 Vitor Sousa Pereira.
+      '((proprietary . "Copyright 2018 Vitor Pereira.
 
 Proprietary and confidential. Unauthorized reproduction or
 transmission of this file in any form, in whole or in part, is
 strictly prohibited.")
-        (apachev2 . "Copyright 2018 Vitor Sousa Pereira.
+        (apachev2 . "Copyright 2018 Vitor Pereira.
 
 Licensed under the Apache License, Version 2.0 (the \"License\");
 you may not use this file except in compliance with the License.
@@ -538,6 +520,8 @@ limitations under the License.")))
   '("\\.mk\\|Makefile\\'" . "Makefile")
   '(nil (my-license "# ")))
 
+;; Protocol Buffers
+
 (use-package protobuf-mode
   :load-path "/usr/local/opt/protobuf/share/doc/protobuf/editors"
   :mode "\\.proto\\'"
@@ -564,67 +548,85 @@ limitations under the License.")))
 ;; swift
 
 (use-package swift-mode
-  :load-path "~/src/third_party/emacs"
-  :mode ("\\.swift\\'"))
-
-;; assembly
-
-;; asm-calculate-indentation
-
-;; (use-package asm-mode
-;;   :defer t
-;;   :init
-;;   (setq asm-comment-char ?\/)
-;;   (font-lock-add-keywords 'asm-mode cpp-font-lock-keywords))
+  :ensure t
+  :mode ("\\.swift\\'")
+  :init
+  (setq swift-mode:basic-offset 2))
 
 ;; python
 
-(setq python-indent-offset 2)
+(setq python-fill-docstring-style 'pep-257-nn)
 
-(defun my-python-indent-continuation (origfun &rest args)
-  (pcase (python-indent-context)
-    (`(:inside-paren-newline-start . ,start)
-     (save-excursion
-       (goto-char start)
-       (+ (current-indentation)
-          (* python-indent-offset python-indent-def-block-scale))))
-    (_ (apply origfun args))))
+;; (setq python-indent-offset 2)
 
-(advice-add #'python-indent--calculate-indentation
-            :around
-            #'my-python-indent-continuation)
+;; (defun my-python-indent-continuation (origfun &rest args)
+;;   (pcase (python-indent-context)
+;;     (`(:inside-paren-newline-start . ,start)
+;;      (save-excursion
+;;        (goto-char start)
+;;        (+ (current-indentation)
+;;           (* python-indent-offset python-indent-def-block-scale))))
+;;     (_ (apply origfun args))))
+
+;; (advice-add #'python-indent--calculate-indentation
+;;             :around
+;;             #'my-python-indent-continuation)
 
 (define-auto-insert
   '("\\.py\\'" . "Python header")
   '(nil (my-license "# ")))
 
+;; ruby
+
+(use-package projectile-rails
+  :ensure t
+  :commands projectile-rails-global-mode
+  :init
+  (setq projectile-rails-keymap-prefix (kbd "C-l"))
+  (projectile-rails-global-mode))
+
+;; (use-package chruby
+;;   :ensure t
+;;   :commands chruby-use-corresponding)
+
 ;; org
 
 (use-package org
   :defer t
-  :init (setq org-startup-indented t)
-  :mode ("\\.org\\'" . org-mode))
+  :mode ("\\.org\\'" . org-mode)
+  :init (setq org-startup-indented t
+              org-startup-truncated nil))
 
 ;; SQL
 
 (use-package sql
   :mode ("\\.sql\\'" . sql-mode)
   :commands sql-mode-hook
-  :bind (:map sql-mode-map
-              ("TAB" . self-insert-command))
   :init
   (use-package sqlup-mode
     :ensure t
     :hook sql-mode)
+  (use-package sql-indent
+    :ensure t
+    :hook (sql-mode . sqlind-minor-mode))
   :config
   (sql-highlight-postgres-keywords))
 
 ;; js
 
-(use-package js-mode
-  :mode "\\.m?js\\'"
+(use-package js2-mode
+  :ensure t
+  :mode "\\.js\\'"
   :init
-  (setq js-indent-level 2))
+  (setq js-indent-level 2
+        js2-strict-missing-semi-warning nil
+        js2-mode-show-strict-warnings nil))
+
+;; jsx
+
+(use-package rjsx-mode
+  :ensure t
+  :mode "\\.jsx\\'")
 
 ;; ts
 
@@ -638,17 +640,26 @@ limitations under the License.")))
 
 (use-package web-mode
   :ensure t
-  :mode "\\.\\(html\\|dtl\\)\\'"
+  :mode (("\\.\\(html\\|dtl\\)\\'" . web-mode)
+         ("\\.html.erb\\'" . web-mode)
+         ("\\.js.erb\\'" . web-mode))
   :commands web-mode-hook
   :init
-  (setq web-mode-markup-indent-offset 2)
-  (defun my-web-mode-hook ()
-    (setq-local electric-pair-inhibit-predicate
-                (lambda (c)
-                  (if (char-equal c ?{)
-                      t
-                    (electric-pair-default-inhibit c)))))
-  (add-hook 'web-mode-hook #'my-web-mode-hook))
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-code-indent-offset 2)
+  ;; :config
+  ;; (defun my-web-mode-hook ()
+  ;;   (setq-local electric-pair-inhibit-predicate
+  ;;               (lambda (c)
+  ;;                 (if (char-equal c ?{)
+  ;;                     t
+  ;;                   (electric-pair-default-inhibit c)))))
+  ;; (defun my-web-mode-hook ()
+  ;;   (electric-indent-mode 0)
+  ;;   (electric-pair-mode 0))
+  ;; (add-hook 'web-mode-hook #'my-web-mode-hook)
+  )
 
 (use-package css-mode
   :mode "\\.css\\'"
@@ -695,16 +706,6 @@ limitations under the License.")))
 ;;   :ensure t
 ;;   :defer t)
 
-;; hack
-
-;; (use-package hack-mode
-;;   :ensure t
-;;   :mode "\\.php\\'")
-
-;; (define-auto-insert
-;;   '("\\.php\\'" . "Hack")
-;;   '(nil "<?hh // strict"))
-
 ;; markdown
 
 (use-package markdown-mode
@@ -719,31 +720,6 @@ limitations under the License.")))
   :config
   (add-hook 'markdown-mode-hook 'turn-on-flyspell))
 
-;; latex
-
-(add-to-list 'auto-mode-alist '("\\.dot\\'" . c-mode))
-
-(use-package tex
-  :ensure auctex
-  :mode ("\\.tex\\'" . TeX-latex-mode)
-  :init
-  (setq-default TeX-engine 'xetex)
-  (setq TeX-auto-save t)
-  (setq TeX-parse-self t)
-  ;; (setq-default TeX-master nil)
-  (setq TeX-PDF-mode t)
-  (setq reftex-plug-into-AUCTeX t)
-  (setq reftex-extra-bindings t)
-  :config
-  (add-hook 'LaTeX-mode-hook
-            (lambda ()
-              (setq-local comment-auto-fill-only-comments nil)))
-  (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
-  (add-hook 'LaTeX-mode-hook 'turn-on-flyspell)
-  (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode))
-
 ;; sh
 
 (setq sh-basic-offset 2
@@ -752,7 +728,8 @@ limitations under the License.")))
 ;; yaml
 
 (use-package yaml-mode
-  :ensure t)
+  :ensure t
+  :mode "\\.ya?ml\\'")
 
 ;;; eshell
 
@@ -798,12 +775,24 @@ limitations under the License.")))
 
 (use-package goto-last-change
   :ensure t
-  :bind ("C-\\" . goto-last-change))
+  :bind ("C--" . goto-last-change))
 
 
-(use-package window-numbering
+(use-package winum
   :ensure t
-  :config (window-numbering-mode t))
+  :init
+  (setq winum-keymap
+        (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "M-1") 'winum-select-window-1)
+          (define-key map (kbd "M-2") 'winum-select-window-2)
+          (define-key map (kbd "M-3") 'winum-select-window-3)
+          (define-key map (kbd "M-4") 'winum-select-window-4)
+          (define-key map (kbd "M-5") 'winum-select-window-5)
+          (define-key map (kbd "M-6") 'winum-select-window-6)
+          (define-key map (kbd "M-7") 'winum-select-window-7)
+          (define-key map (kbd "M-8") 'winum-select-window-8)
+          map))
+  :config (winum-mode))
 
 
 (use-package ws-butler
@@ -812,9 +801,38 @@ limitations under the License.")))
 
 
 (use-package dumb-jump
-  :ensure
+  :ensure t
   :bind (("M-g o" . dumb-jump-go-other-window)
          ("M-g j" . dumb-jump-go)
          ("M-g i" . dumb-jump-go-prompt)
          ("M-g x" . dumb-jump-go-prefer-external)
          ("M-g z" . dumb-jump-go-prefer-external-other-window)))
+
+
+(use-package treemacs
+ :ensure t
+ :bind (("<f8>" . #'treemacs-select-window)
+        :map treemacs-mode-map
+        ([mouse-1] . #'treemacs-single-click-expand-action))
+ :init
+ (setq treemacs-no-png-images t
+       treemacs-width 45))
+
+
+(use-package projectile
+  :ensure t
+  :bind-keymap ("C-c p" . projectile-command-map)
+  :bind (("M-." . projectile-find-file)
+         ("M-F" . projectile-grep)))
+
+
+(use-package avy
+  :ensure t
+  :bind ("M--" . avy-goto-char))
+
+
+(use-package bazel-mode
+  :load-path "~/src/third_party/emacs-bazel-mode"
+  :mode ("\\.bzl\\'"
+         "WORKSPACE\\'"
+         "BUILD\\'"))
