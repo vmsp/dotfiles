@@ -11,7 +11,7 @@ export HISTFILESIZE=
 
 PS1="\\[\\e[36m\\]\\w \\[\\e[31m\\]❯ \\[\\e[0m\\]"
 if [[ -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
-  PS1="(\\[\\e[33m\\]\\h) $PS1"
+  PS1="\\[\\e[33m\\](\\h) $PS1"
 fi
 
 alias ..="cd .."
@@ -28,6 +28,7 @@ alias gdb="gdb -q"
 alias py="python"
 alias py2="python2"
 alias py3="python3"
+alias k="rlwrap k"
 
 dotfiles() {
   git --git-dir="$HOME"/.dotfiles/ --work-tree="$HOME" "$@"

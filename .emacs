@@ -243,17 +243,17 @@
 
 ;; (load-theme 'leuven t)
 
-;; (use-package gruvbox-theme
-;;   :ensure t
-;;   :config (load-theme 'gruvbox t))
+(use-package gruvbox-theme
+  :ensure t
+  :config (load-theme 'gruvbox t))
 
 ;; (use-package monokai-theme
 ;;   :ensure t
 ;;   :config (load-theme 'monokai t))
 
-(use-package rebecca-theme
-  :ensure t
-  :config (load-theme 'rebecca t))
+;; (use-package rebecca-theme
+;;   :ensure t
+;;   :config (load-theme 'rebecca t))
 
 ;; (use-package dracula-theme
 ;;   :ensure t
@@ -578,13 +578,6 @@ limitations under the License.")))
 
 ;; ruby
 
-(use-package projectile-rails
-  :ensure t
-  :commands projectile-rails-global-mode
-  :init
-  (setq projectile-rails-keymap-prefix (kbd "C-l"))
-  (projectile-rails-global-mode))
-
 ;; (use-package chruby
 ;;   :ensure t
 ;;   :commands chruby-use-corresponding)
@@ -620,7 +613,8 @@ limitations under the License.")))
   :init
   (setq js-indent-level 2
         js2-strict-missing-semi-warning nil
-        js2-mode-show-strict-warnings nil))
+        js2-mode-show-strict-warnings nil
+        js2-include-node-externs t))
 
 ;; jsx
 
@@ -632,7 +626,7 @@ limitations under the License.")))
 
 (use-package typescript-mode
   :ensure t
-  :mode "\\.ts\\'"
+  :mode "\\.tsx?\\'"
   :init
   (setq typescript-indent-level 2))
 
@@ -642,28 +636,27 @@ limitations under the License.")))
   :ensure t
   :mode (("\\.\\(html\\|dtl\\)\\'" . web-mode)
          ("\\.html.erb\\'" . web-mode)
-         ("\\.js.erb\\'" . web-mode))
+         ("\\.js.erb\\'" . web-mode)
+         ("\\.svelte\\'" . web-mode))
   :commands web-mode-hook
   :init
   (setq web-mode-markup-indent-offset 2
         web-mode-css-indent-offset 2
-        web-mode-code-indent-offset 2)
-  ;; :config
-  ;; (defun my-web-mode-hook ()
-  ;;   (setq-local electric-pair-inhibit-predicate
-  ;;               (lambda (c)
-  ;;                 (if (char-equal c ?{)
-  ;;                     t
-  ;;                   (electric-pair-default-inhibit c)))))
-  ;; (defun my-web-mode-hook ()
-  ;;   (electric-indent-mode 0)
-  ;;   (electric-pair-mode 0))
-  ;; (add-hook 'web-mode-hook #'my-web-mode-hook)
-  )
+        web-mode-code-indent-offset 2
+        ;; web-mode-enable-auto-pairing nil
+        ;; web-mode-auto-quote-style 2
+        web-mode-comment-formats '(("javascript" . "//")
+                                   ("jsx" . "//"))))
 
 (use-package css-mode
   :mode "\\.css\\'"
   :init (setq css-indent-offset 2))
+
+;; graphql
+
+(use-package graphql-mode
+  :ensure t
+  :mode ("\\.graphql\\'"))
 
 ;; kdb+/q
 
@@ -706,6 +699,12 @@ limitations under the License.")))
 ;;   :ensure t
 ;;   :defer t)
 
+;; hack
+
+(use-package hack-mode
+  :ensure t
+  :mode (("\\.hack\\'" . hack-mode)))
+
 ;; markdown
 
 (use-package markdown-mode
@@ -725,11 +724,31 @@ limitations under the License.")))
 (setq sh-basic-offset 2
       sh-indentation 2)
 
+;; lua
+
+(use-package lua-mode
+  :ensure t
+  :mode "\\.lua\\'"
+  :init
+  (setq lua-indent-level 2))
+
 ;; yaml
 
 (use-package yaml-mode
   :ensure t
   :mode "\\.ya?ml\\'")
+
+;; docker
+
+(use-package dockerfile-mode
+  :ensure t
+  :mode "Dockerfile\\'")
+
+;; nginx
+
+(use-package nginx-mode
+  :ensure t
+  :mode "nginx.conf\\'")
 
 ;;; eshell
 
@@ -810,13 +829,18 @@ limitations under the License.")))
 
 
 (use-package treemacs
- :ensure t
- :bind (("<f8>" . #'treemacs-select-window)
-        :map treemacs-mode-map
-        ([mouse-1] . #'treemacs-single-click-expand-action))
- :init
- (setq treemacs-no-png-images t
-       treemacs-width 45))
+  :ensure t
+  :bind (("<f8>" . treemacs-select-window)
+         :map treemacs-mode-map
+         ([mouse-1] . treemacs-single-click-expand-action))
+  :init
+  (setq treemacs-no-png-images t
+        treemacs-width 42))
+
+
+(use-package treemacs-projectile
+  :ensure t
+  :defer t)
 
 
 (use-package projectile
@@ -824,6 +848,12 @@ limitations under the License.")))
   :bind-keymap ("C-c p" . projectile-command-map)
   :bind (("M-." . projectile-find-file)
          ("M-F" . projectile-grep)))
+
+
+(use-package projectile-rails
+  :ensure t
+  :hook (ruby-mode . projectile-rails-mode)
+  :bind-keymap ("C-l" . projectile-rails-command-map))
 
 
 (use-package avy
