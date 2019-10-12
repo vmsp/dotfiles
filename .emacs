@@ -105,7 +105,7 @@
 (setq make-pointer-invisible t)
 
 ;; Tab size
-(setq-default tab-width 2)
+(setq-default tab-width 4)
 
 ;; Indent with spaces, by default
 (setq-default indent-tabs-mode nil)
@@ -545,6 +545,12 @@ limitations under the License.")))
   '("\\.gn\\'" . "GN")
   '(nil (my-license "# ")))
 
+(use-package bazel-mode
+  :load-path "~/src/third_party/emacs-bazel-mode"
+  :mode ("\\.bzl\\'"
+         "WORKSPACE\\'"
+         "BUILD\\'"))
+
 ;; swift
 
 (use-package swift-mode
@@ -609,7 +615,7 @@ limitations under the License.")))
 
 (use-package js2-mode
   :ensure t
-  :mode "\\.js\\'"
+  ;; :mode "\\.js\\'"
   :init
   (setq js-indent-level 2
         js2-strict-missing-semi-warning nil
@@ -620,7 +626,7 @@ limitations under the License.")))
 
 (use-package rjsx-mode
   :ensure t
-  :mode "\\.jsx\\'")
+  :mode "\\.js\\'")
 
 ;; ts
 
@@ -705,6 +711,19 @@ limitations under the License.")))
   :ensure t
   :mode (("\\.hack\\'" . hack-mode)))
 
+;; sh
+
+(setq sh-basic-offset 2
+      sh-indentation 2)
+
+;; lua
+
+(use-package lua-mode
+  :ensure t
+  :mode "\\.lua\\'"
+  :init
+  (setq lua-indent-level 2))
+
 ;; markdown
 
 (use-package markdown-mode
@@ -718,19 +737,6 @@ limitations under the License.")))
   (setq markdown-command "multimarkdown")
   :config
   (add-hook 'markdown-mode-hook 'turn-on-flyspell))
-
-;; sh
-
-(setq sh-basic-offset 2
-      sh-indentation 2)
-
-;; lua
-
-(use-package lua-mode
-  :ensure t
-  :mode "\\.lua\\'"
-  :init
-  (setq lua-indent-level 2))
 
 ;; yaml
 
@@ -828,6 +834,13 @@ limitations under the License.")))
          ("M-g z" . dumb-jump-go-prefer-external-other-window)))
 
 
+(use-package avy
+  :ensure t
+  :bind ("M--" . avy-goto-char))
+
+
+;;; Project
+
 (use-package treemacs
   :ensure t
   :bind (("<f8>" . treemacs-select-window)
@@ -846,8 +859,8 @@ limitations under the License.")))
 (use-package projectile
   :ensure t
   :bind-keymap ("C-c p" . projectile-command-map)
-  :bind (("M-." . projectile-find-file)
-         ("M-F" . projectile-grep)))
+  :bind* (("M-." . projectile-find-file)
+          ("M-F" . projectile-grep)))
 
 
 (use-package projectile-rails
@@ -855,14 +868,10 @@ limitations under the License.")))
   :hook (ruby-mode . projectile-rails-mode)
   :bind-keymap ("C-l" . projectile-rails-command-map))
 
+;;; Tramp
 
-(use-package avy
-  :ensure t
-  :bind ("M--" . avy-goto-char))
+(setq tramp-default-method "ssh")
 
+;;; Load host specific configuration
 
-(use-package bazel-mode
-  :load-path "~/src/third_party/emacs-bazel-mode"
-  :mode ("\\.bzl\\'"
-         "WORKSPACE\\'"
-         "BUILD\\'"))
+(load "~/.host.el" t)
